@@ -19,34 +19,55 @@ app.use(bodyParser.json());
 // ------------------- Firebase Admin init -------------------
 console.log("🔧 Initializing Firebase Admin...");
 try {
-  const serviceAccountPath = "./serviceAccountKey.json";
-  console.log("📁 Looking for service account at:", serviceAccountPath);
+  // Use environment variable for service account
+  const serviceAccountJSON = process.env.FIREBASE_SERVICE_ACCOUNT;
   
-  if (!fs.existsSync(serviceAccountPath)) {
-    throw new Error("Service account file not found at: " + serviceAccountPath);
-  }
-  
-  const serviceAccountContent = fs.readFileSync(serviceAccountPath, "utf8");
-  console.log("✅ Service account file found");
-  
-  const serviceAccount = JSON.parse(serviceAccountContent);
-  
-  // Validate required fields
-  const requiredFields = ['type', 'project_id', 'private_key', 'client_email'];
-  for (const field of requiredFields) {
-    if (!serviceAccount[field]) {
-      throw new Error(`Missing required field in service account: ${field}`);
+  if (!serviceAccountJSON) {
+    // Fallback to local file for development
+    const serviceAccountPath = "./serviceAccountKey.json";
+    if (fs.existsSync(serviceAccountPath)) {
+      console.log("📁 Using local service account file for development");
+      const serviceAccountContent = fs.readFileSync(serviceAccountPath, "utf8");
+      const serviceAccount = JSON.parse(serviceAccountContent);
+      
+      // Validate required fields
+      const requiredFields = ['type', 'project_id', 'private_key', 'client_email'];
+      for (const field of requiredFields) {
+        if (!serviceAccount[field]) {
+          throw new Error(`Missing required field in service account: ${field}`);
+        }
+      }
+      
+      console.log("✅ Service account JSON parsed successfully");
+      console.log("🔧 Project ID:", serviceAccount.project_id);
+      console.log("🔧 Client Email:", serviceAccount.client_email);
+      
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    } else {
+      throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set and local service account file not found");
     }
+  } else {
+    console.log("✅ Using Firebase service account from environment variables");
+    const serviceAccount = JSON.parse(serviceAccountJSON);
+    
+    // Validate required fields
+    const requiredFields = ['type', 'project_id', 'private_key', 'client_email'];
+    for (const field of requiredFields) {
+      if (!serviceAccount[field]) {
+        throw new Error(`Missing required field in service account: ${field}`);
+      }
+    }
+    
+    console.log("✅ Service account JSON parsed successfully");
+    console.log("🔧 Project ID:", serviceAccount.project_id);
+    console.log("🔧 Client Email:", serviceAccount.client_email);
+    
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
   }
-  
-  console.log("✅ Service account JSON parsed successfully");
-  console.log("🔧 Project ID:", serviceAccount.project_id);
-  console.log("🔧 Client Email:", serviceAccount.client_email);
-  
-  // Initialize Firebase Admin
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
   
   console.log("🎉 Firebase Admin initialized successfully!");
   
@@ -237,7 +258,7 @@ app.get("/api/debug-firestore", async (req, res) => {
 
 // ------------------- Routes -------------------
 app.use("/api/items", reviewsRouter);
-app.use("/api/users", usersRouter); // This will use the auth middleware from users.js
+app.use("/api/users", usersRouter);
 
 // ------------------- Start server -------------------
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
