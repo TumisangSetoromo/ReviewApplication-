@@ -1,112 +1,100 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import backgroundImage from "../assets/img2.jpg"; // ✅ local image
+import backgroundImage from "../assets/img2.jpg";
+import axios from "axios";
+
+const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [homeMovies, setHomeMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Apply background to the body itself (not just container)
   useEffect(() => {
-    // set background for the whole page
     document.body.style.backgroundImage = `url(${backgroundImage})`;
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundRepeat = "no-repeat";
-    document.body.style.backgroundAttachment = "fixed"; // makes it stay still while scrolling
+    document.body.style.backgroundAttachment = "fixed";
     document.body.style.margin = 0;
 
-    // cleanup when leaving the page
     return () => {
       document.body.style.backgroundImage = "";
-      document.body.style.backgroundColor = "white"; // restore default
+      document.body.style.backgroundColor = "white";
     };
   }, []);
 
-  const styles = {
-    overlay: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
-      zIndex: 0,
-    },
-    content: {
-      position: "relative",
-      zIndex: 1,
-      color: "#fff",
-      textAlign: "center",
-      minHeight: "10vh",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      padding: "2rem",
-    },
-    title: {
-      fontSize: "3rem",
-      fontWeight: 800,
-      marginBottom: "1rem",
-      textShadow: "0px 4px 8px rgba(0,0,0,0.5)",
-    },
-    subtitle: {
-      fontSize: "1.3rem",
-      marginBottom: "2rem",
-      color: "#e2e8f0",
-      lineHeight: 1.6,
-      textShadow: "0px 2px 4px rgba(0,0,0,0.3)",
-      maxWidth: "700px",
-    },
-    btnGroup: {
-      display: "flex",
-      gap: "1rem",
-      justifyContent: "center",
-      flexWrap: "wrap",
-    },
-    btn: {
-      padding: "0.9rem 1.8rem",
-      border: "none",
-      borderRadius: "30px",
-      fontSize: "1rem",
-      cursor: "pointer",
-      background: "linear-gradient(135deg, #2563eb, #38bdf8)",
-      color: "white",
-      fontWeight: "600",
-      transition: "transform 0.3s ease, box-shadow 0.3s ease",
-      boxShadow: "0px 3px 6px rgba(0,0,0,0.3)",
-    },
-    btnAlt: {
-      background: "linear-gradient(135deg, #0ea5a4, #14b8a6)",
-    },
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API}/api/home-movies`);
+        setHomeMovies(res.data.movies || []);
+      } catch (err) {
+        console.error("Failed to fetch home movies:", err.response?.data || err.message || err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMovies();
+  }, []);
+
+  const openMovie = (movie) => {
+    navigate(`/items/${movie.id}?type=movie&name=${encodeURIComponent(movie.title)}`);
+  };
+
+  const renderStars = (vote) => {
+    const stars = Math.round(vote / 2);
+    return "★".repeat(stars) + "☆".repeat(5 - stars);
   };
 
   return (
-    <>
-      <div style={styles.overlay}></div>
-
-      <div style={styles.content}>
-        <h1 style={styles.title}>Welcome to ReviewHub</h1>
-        <p style={styles.subtitle}>
-          Discover and share your thoughts on movies and restaurants around the world.
+    <div style={{ padding: "1rem" }}>
+      <div style={{ textAlign: "center", marginBottom: "2rem", color: "#fff", zIndex: 1 }}>
+        <h1 style={{ fontSize: "2.5rem", textShadow: "2px 2px 6px rgba(0,0,0,0.7)" }}>Welcome to ReviewHub</h1>
+        <p style={{ fontSize: "1.2rem", textShadow: "1px 1px 4px rgba(0,0,0,0.6)" }}>
+          Discover popular, trending, and new movies before you search!
         </p>
-
-        <div style={styles.btnGroup}>
-          <button
-            style={styles.btn}
-            onClick={() => navigate("/search?type=movie")}
-          >
-            🎬 Explore Movies
-          </button>
-
-          <button
-            style={{ ...styles.btn, ...styles.btnAlt }}
-            onClick={() => navigate("/search?type=restaurant")}
-          >
-            🍴 Explore Restaurants
-          </button>
-        </div>
       </div>
-    </>
+
+      {loading ? (
+        <p style={{ color: "#fff", textAlign: "center" }}>Loading movies...</p>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+            gap: "16px",
+          }}
+        >
+          {homeMovies.map((m) => (
+            <div
+              key={m.id}
+              style={{
+                cursor: "pointer",
+                borderRadius: "8px",
+                overflow: "hidden",
+                backgroundColor: "rgba(0,0,0,0.6)",
+                color: "#fff",
+                textAlign: "center",
+                padding: 8,
+              }}
+              onClick={() => openMovie(m)}
+            >
+              <img
+                src={m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : ""}
+                alt={m.title}
+                style={{ width: "100%", borderRadius: 8 }}
+              />
+              <div style={{ marginTop: 8 }}>
+                <strong>{m.title}</strong>
+                <div style={{ fontSize: 14 }}>Rating: {m.avgRating.toFixed(1)} ({m.reviews?.length || 0})</div>
+                <div style={{ color: "#ffcc00", fontSize: 14 }}>{renderStars(m.avgRating)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
