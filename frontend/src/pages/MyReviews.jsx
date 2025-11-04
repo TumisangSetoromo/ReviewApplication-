@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { auth } from "../firebase"; // Changed from getAuth to auth
+import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API = "https://review-platform-backend-s1gq.onrender.com";
 
 export default function MyReviews() {
   const [reviews, setReviews] = useState([]);
@@ -59,7 +59,6 @@ export default function MyReviews() {
       const token = await auth.currentUser.getIdToken();
       console.log("🗑️ Deleting review:", reviewId);
       
-      // FIXED: Updated API path to match backend routes
       await axios.delete(`${API}/api/items/reviews/${reviewId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });

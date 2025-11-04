@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import backgroundImage from "../assets/img2.jpg";
 import axios from "axios";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API = "https://review-platform-backend-s1gq.onrender.com";
 
 export default function Home() {
   const navigate = useNavigate();

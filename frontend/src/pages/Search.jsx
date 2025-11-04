@@ -1,4 +1,3 @@
-// src/pages/Search.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaUtensils, FaFilm } from "react-icons/fa";
@@ -6,7 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import backgroundImage from "../assets/img2.jpg";
 import { auth } from "../firebase";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API = "https://review-platform-backend-s1gq.onrender.com";
 
 const Search = () => {
   const [query, setQuery] = useState("");

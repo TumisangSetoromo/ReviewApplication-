@@ -3,7 +3,7 @@ import { useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import { getAuth } from "firebase/auth";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API = "https://review-platform-backend-s1gq.onrender.com";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
